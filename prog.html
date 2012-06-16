@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <script src="mootools.js"></script>
+        <script>
+            var TypingTutor = new Class({
+                initialize: function(examText) {
+                    this.hits = 0;
+                    this.misses = 0;
+                    this.backspaces = 0;
+                    this.currentCharIndex = 0;
+                    this.testString = examText;
+                    this.startTime = new Date().getTime();
+                },
+                finish: function() {
+                    this.time = Math.round((new Date().getTime() - this.startTime) / 1000);
+                    this.wpm = Math.round(60 / this.time * (this.testString.length / 5));
+                    var errorPercentage = 100 / (this.testString.length / this.misses);
+                    this.errorPercentage =
+                    errorPercentage.toPrecision((Math.floor(errorPercentage) + "").length + 1);
+                }
+            });
+            function getExamElement() {
+                var textElement = getExamText();
+                return textElement;
+            }
+            function getExamText() {
+                var text = "F\nLorem ipsum dolor sit amet.";
+                return text
+            }
+            function keyEquals(event, anotherKey) {
+                if (event.key === anotherKey) {
+                    return true;
+                }
+                if (event.key === ' ' || anotherKey === ' ') {
+                    if (event.key === 'space' || anotherKey === 'space') {
+                        return true;
+                    }
+                }
+                if (event.key.charCodeAt(0) === 190 && anotherKey === '.') {
+                    return true;
+                }
+                if (event.key === 'enter' || anotherKey === "enter") {
+                    if (event.key === "\n" || anotherKey === "\n") {
+                        return true;
+                    }
+                }
+                if (event.shift && event.key === anotherKey.toLowerCase()) {
+                    return true;
+                }
+                return false;
+            }
+            // 0 Shift
+            // 17 Alt
+            // 18 Ctrl
+            function keyIsModifier(e) {
+                if (e.key.charCodeAt(0) === 0 ||
+                    e.key.charCodeAt(0) === 17 ||
+                    e.key.charCodeAt(0) === 18) {
+                    return true;
+                }
+                return false;
+            }
+            window.addEvent('domready', function() {
+                $('examText').set('html', getExamElement());
+                var tutor = false;
+                var keyPressed = function(e) {
+                    if (!tutor) {
+                        tutor = new TypingTutor($('examText').get('html'));
+                    }
+                    if (e.key === 'tab') {
+                        return;
+                    }
+
+                    if (keyIsModifier(e)) {
+                        return;
+                    }
+                    if (e.key === 'backspace') {
+                        tutor.currentCharIndex = tutor.currentCharIndex - 1;
+                        tutor.backspaces++;
+                        $('backspaces').set('html', tutor.backspaces);
+                        return;
+                    }
+                    var testChar = tutor.testString[tutor.currentCharIndex];
+                    tutor.currentCharIndex = tutor.currentCharIndex + 1;
+                    if (keyEquals(e, testChar)) {
+                        tutor.hits++;
+                    } else {
+                        var typedStringLength = $('test').get('value').length;
+                        var testStringUpToNow = tutor.testString.substring(0,typedStringLength);
+                        if ($('test').get('value') !== testStringUpToNow) {
+                            tutor.misses++;
+                            var missedCharactersHtml = $('missedCharacters').get('html');
+                            $('missedCharacters').set('html', missedCharactersHtml + ' ' + testChar);
+                        }
+                    }
+                    $('hits').set('html', tutor.hits);
+                    $('misses').set('html', tutor.misses);
+                    if (tutor.currentCharIndex === tutor.testString.length) {
+                        tutor.finish();
+                        $('time').set('html', tutor.time);
+                        $('wpm').set('html', tutor.wpm);
+                        $('errorPercentage').set('html', tutor.errorPercentage);
+                        $('test').set('disabled', 'disabled');
+                        return;
+                    }
+                }
+
+                $('test').addEvent('keyup', keyPressed);
+                $('restart').addEvent('click', function() {
+                    tutor = new TypingTutor($('examText').get('html'));
+                    $('hits').set('html', '');
+                    $('misses').set('html', '');
+                    $('backspaces').set('html', '');
+                    $('time').set('html', '');
+                    $('wpm').set('html', '');
+                    $('errorPercentage').set('html', '');
+                    $('missedCharacters').set('html', '');
+                    $('test').set('disabled', '');
+                    $('test').set('value', '');
+                    $('test').focus();
+                });
+            });
+        </script>
+        <style>
+            h1 {
+                text-align: center;
+            }
+            div#examination {
+                width: 100%;
+            }
+            div#examArea {
+                margin-left: auto;
+                margin-right: auto;
+                width: 300px;
+            }
+            div#statistics {
+                margin-left: auto;
+                margin-right: auto;
+                width: 300px;
+            }
+            div.examText {
+                border: 1px solid #666666;
+                height: 150px;
+            }
+            textarea#test {
+                width: 100%;
+                height: 150px;
+            }
+            button#restart {
+                width: 40%;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Touch typing drill</h1>
+        <div id="examination">
+            <div id="examArea">
+            <div class="examText">
+                <pre><span id="examText"></span></pre>
+            </div>
+                <textarea id="test"></textarea>
+            </div>
+            <div id="statistics">
+                <ul class="statistics">
+                    <li>Hits:<span id="hits">0</span></li>
+                    <li>Misses:<span id="misses">0</span></li>
+                    <li>Backspaces:<span id="backspaces">0</span></li>
+                    <li>Time:<span id="time"></span></li>
+                    <li>Wpm:<span id="wpm"></span></li>
+                    <li>Error percentage:<span id="errorPercentage"></span>%</li>
+                    <li>Missed characters:<span id="missedCharacters"></span></li>
+                </ul>
+                <div>
+                    <button id="restart">Restart</button>
+                </div>
+            </div>
+        <div>
+    </body>
+</html>
