@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <script src="mootools.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mootools/1.5.1/mootools-core-full-compat.min.js"></script>
         <script>
             var TypingTutor = new Class({
                 initialize: function(examText) {
@@ -26,7 +26,7 @@
                 return textElement;
             }
             function getExamText() {
-                var text = "F\nLorem ipsum dolor sit amet.";
+                var text = "Ha.Ha.";
                 return text
             }
             function keyEquals(event, anotherKey) {
@@ -51,63 +51,54 @@
                 }
                 return false;
             }
-            // 0 Shift
-            // 17 Alt
-            // 18 Ctrl
-            function keyIsModifier(e) {
-                if (e.key.charCodeAt(0) === 0 ||
-                    e.key.charCodeAt(0) === 17 ||
-                    e.key.charCodeAt(0) === 18) {
-                    return true;
-                }
-                return false;
-            }
+
             window.addEvent('domready', function() {
                 $('examText').set('html', getExamElement());
                 var tutor = false;
                 var keyPressed = function(e) {
-                    if (!tutor) {
-                        tutor = new TypingTutor($('examText').get('html'));
-                    }
-                    if (e.key === 'tab') {
-                        return;
-                    }
+		    // setTimeout is necessary because the keypress event 
+		    // does not otherwise enter the char before executing this.
+		    setTimeout(function() {
+			if (!tutor) {
+			    tutor = new TypingTutor($('examText').get('html'));
+			}
+			if (e.key === 'tab') {
+			    return;
+			}
 
-                    if (keyIsModifier(e)) {
-                        return;
-                    }
-                    if (e.key === 'backspace') {
-                        tutor.currentCharIndex = tutor.currentCharIndex - 1;
-                        tutor.backspaces++;
-                        $('backspaces').set('html', tutor.backspaces);
-                        return;
-                    }
-                    var testChar = tutor.testString[tutor.currentCharIndex];
-                    tutor.currentCharIndex = tutor.currentCharIndex + 1;
-                    if (keyEquals(e, testChar)) {
-                        tutor.hits++;
-                    } else {
-                        var typedStringLength = $('test').get('value').length;
-                        var testStringUpToNow = tutor.testString.substring(0,typedStringLength);
-                        if ($('test').get('value') !== testStringUpToNow) {
-                            tutor.misses++;
-                            var missedCharactersHtml = $('missedCharacters').get('html');
-                            $('missedCharacters').set('html', missedCharactersHtml + ' ' + testChar);
-                        }
-                    }
-                    $('hits').set('html', tutor.hits);
-                    $('misses').set('html', tutor.misses);
-                    if (tutor.currentCharIndex === tutor.testString.length) {
-                        tutor.finish();
-                        $('time').set('html', tutor.time);
-                        $('wpm').set('html', tutor.wpm);
-                        $('errorPercentage').set('html', tutor.errorPercentage);
-                        $('test').set('disabled', 'disabled');
-                        return;
-                    }
+			if (e.key === 'backspace') {
+			    tutor.currentCharIndex = tutor.currentCharIndex - 1;
+			    tutor.backspaces++;
+			    $('backspaces').set('html', tutor.backspaces);
+			    return;
+			}
+			var testChar = tutor.testString[tutor.currentCharIndex];
+			tutor.currentCharIndex = tutor.currentCharIndex + 1;
+			if (keyEquals(e, testChar)) {
+			    tutor.hits++;
+			} else {
+			    var typedStringLength = $('test').get('value').length;
+			    var testStringUpToNow = tutor.testString.substring(0, typedStringLength);
+			    if ($('test').get('value') != testStringUpToNow) {
+				tutor.misses++;
+				var missedCharactersHtml = $('missedCharacters').get('html');
+				$('missedCharacters').set('html', missedCharactersHtml + ' ' + testChar);
+			    }
+			}
+			$('hits').set('html', tutor.hits);
+			$('misses').set('html', tutor.misses);
+			if (tutor.currentCharIndex === tutor.testString.length) {
+			    tutor.finish();
+			    $('time').set('html', tutor.time);
+			    $('wpm').set('html', tutor.wpm);
+			    $('errorPercentage').set('html', tutor.errorPercentage);
+			    $('test').set('disabled', 'disabled');
+			    return;
+			}
+		    }, 0)
                 }
 
-                $('test').addEvent('keyup', keyPressed);
+                $('test').addEvent('keypress', keyPressed);
                 $('restart').addEvent('click', function() {
                     tutor = new TypingTutor($('examText').get('html'));
                     $('hits').set('html', '');
@@ -158,7 +149,7 @@
         <div id="examination">
             <div id="examArea">
             <div class="examText">
-                <pre><span id="examText"></span></pre>
+                <span id="examText"></span>
             </div>
                 <textarea id="test"></textarea>
             </div>
