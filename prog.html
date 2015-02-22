@@ -2,117 +2,127 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <script src="chance.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mootools/1.5.1/mootools-core-full-compat.min.js"></script>
         <script>
             var TypingTutor = new Class({
                 initialize: function(examText) {
-                    this.hits = 0;
-                    this.misses = 0;
-                    this.backspaces = 0;
-                    this.currentCharIndex = 0;
-                    this.testString = examText;
-                    this.startTime = new Date().getTime();
+                    this.hits = 0
+                    this.misses = 0
+                    this.backspaces = 0
+                    this.currentCharIndex = 0
+                    this.testString = examText
+                    this.startTime = new Date().getTime()
                 },
                 finish: function() {
-                    this.time = Math.round((new Date().getTime() - this.startTime) / 1000);
-                    this.wpm = Math.round(60 / this.time * (this.testString.length / 5));
-                    var errorPercentage = 100 / (this.testString.length / this.misses);
+		    var chars = this.hits - this.backspaces
+                    this.time = Math.round((new Date().getTime() - this.startTime) / 1000)
+                    this.wpm = Math.round(60 / this.time * (chars / 5))
+                    var errorPercentage = 100 / (chars / this.misses)
                     this.errorPercentage =
-                    errorPercentage.toPrecision((Math.floor(errorPercentage) + "").length + 1);
+                    errorPercentage.toPrecision((Math.floor(errorPercentage) + "").length + 1)
                 }
-            });
+            })
             function getExamElement() {
-                var textElement = getExamText();
-                return textElement;
+                var textElement = getExamText()
+                return textElement
             }
             function getExamText() {
-                var text = "Ha.Ha.";
+                var text = chance.sentence()
                 return text
             }
             function keyEquals(event, anotherKey) {
                 if (event.key === anotherKey) {
-                    return true;
+                    return true
                 }
                 if (event.key === ' ' || anotherKey === ' ') {
                     if (event.key === 'space' || anotherKey === 'space') {
-                        return true;
+                        return true
                     }
                 }
                 if (event.key.charCodeAt(0) === 190 && anotherKey === '.') {
-                    return true;
+                    return true
                 }
                 if (event.key === 'enter' || anotherKey === "enter") {
                     if (event.key === "\n" || anotherKey === "\n") {
-                        return true;
+                        return true
                     }
                 }
                 if (event.shift && event.key === anotherKey.toLowerCase()) {
-                    return true;
+                    return true
                 }
-                return false;
+                return false
             }
 
+	    var tutor = false
             window.addEvent('domready', function() {
-                $('examText').set('html', getExamElement());
-                var tutor = false;
+                $('examText').set('html', getExamElement())
                 var keyPressed = function(e) {
 		    // setTimeout is necessary because the keypress event 
 		    // does not otherwise enter the char before executing this.
 		    setTimeout(function() {
 			if (!tutor) {
-			    tutor = new TypingTutor($('examText').get('html'));
+			    tutor = new TypingTutor($('examText').get('html'))
 			}
 			if (e.key === 'tab') {
-			    return;
+			    return
 			}
 
 			if (e.key === 'backspace') {
-			    tutor.currentCharIndex = tutor.currentCharIndex - 1;
-			    tutor.backspaces++;
-			    $('backspaces').set('html', tutor.backspaces);
-			    return;
+			    tutor.currentCharIndex = tutor.currentCharIndex - 1
+			    tutor.backspaces++
+			    $('backspaces').set('html', tutor.backspaces)
+			    return
 			}
-			var testChar = tutor.testString[tutor.currentCharIndex];
-			tutor.currentCharIndex = tutor.currentCharIndex + 1;
+			var testChar = tutor.testString[tutor.currentCharIndex]
+			tutor.currentCharIndex = tutor.currentCharIndex + 1
 			if (keyEquals(e, testChar)) {
-			    tutor.hits++;
+			    tutor.hits++
 			} else {
-			    var typedStringLength = $('test').get('value').length;
-			    var testStringUpToNow = tutor.testString.substring(0, typedStringLength);
+			    var typedStringLength = $('test').get('value').length
+			    var testStringUpToNow = tutor.testString.substring(0, typedStringLength)
 			    if ($('test').get('value') != testStringUpToNow) {
-				tutor.misses++;
-				var missedCharactersHtml = $('missedCharacters').get('html');
-				$('missedCharacters').set('html', missedCharactersHtml + ' ' + testChar);
+				tutor.misses++
+				var missedCharactersHtml = $('missedCharacters').get('html')
+				$('missedCharacters').set('html', missedCharactersHtml + ' ' + testChar)
 			    }
 			}
-			$('hits').set('html', tutor.hits);
-			$('misses').set('html', tutor.misses);
+			$('hits').set('html', tutor.hits)
+			$('misses').set('html', tutor.misses)
 			if (tutor.currentCharIndex === tutor.testString.length) {
-			    tutor.finish();
-			    $('time').set('html', tutor.time);
-			    $('wpm').set('html', tutor.wpm);
-			    $('errorPercentage').set('html', tutor.errorPercentage);
-			    $('test').set('disabled', 'disabled');
-			    return;
+			    finishTutor()
+			    return
 			}
 		    }, 0)
                 }
 
-                $('test').addEvent('keypress', keyPressed);
+                $('test').addEvent('keypress', keyPressed)
+
                 $('restart').addEvent('click', function() {
-                    tutor = new TypingTutor($('examText').get('html'));
-                    $('hits').set('html', '');
-                    $('misses').set('html', '');
-                    $('backspaces').set('html', '');
-                    $('time').set('html', '');
-                    $('wpm').set('html', '');
-                    $('errorPercentage').set('html', '');
-                    $('missedCharacters').set('html', '');
-                    $('test').set('disabled', '');
-                    $('test').set('value', '');
-                    $('test').focus();
-                });
-            });
+                    tutor = new TypingTutor($('examText').get('html'))
+                    $('hits').set('html', '')
+                    $('misses').set('html', '')
+                    $('backspaces').set('html', '')
+                    $('time').set('html', '')
+                    $('wpm').set('html', '')
+                    $('errorPercentage').set('html', '')
+                    $('missedCharacters').set('html', '')
+                    $('test').set('disabled', '')
+                    $('test').set('value', '')
+                    $('test').focus()
+                })
+
+		$('finish').addEvent('click', function() {
+			finishTutor()
+	        })
+		function finishTutor() {
+			tutor.finish()
+			$('time').set('html', tutor.time)
+			$('wpm').set('html', tutor.wpm)
+			$('errorPercentage').set('html', tutor.errorPercentage)
+			$('test').set('disabled', 'disabled')
+		}
+            })
         </script>
         <style>
             h1 {
@@ -165,6 +175,7 @@
                 </ul>
                 <div>
                     <button id="restart">Restart</button>
+                    <button id="finish">Finish</button>
                 </div>
             </div>
         <div>
