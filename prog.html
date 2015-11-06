@@ -23,14 +23,17 @@
                     errorPercentage.toPrecision((Math.floor(errorPercentage) + "").length + 1)
                 }
             })
-            function getExamElement() {
-                var textElement = getExamText()
+
+            function examElement() {
+                var textElement = examText()
                 return textElement
             }
-            function getExamText() {
+
+            function examText() {
                 var text = chance.sentence()
                 return text
             }
+
             function keyEquals(event, anotherKey) {
                 if (event.key === anotherKey) {
                     return true
@@ -54,45 +57,83 @@
                 return false
             }
 
+            function finishTutor() {
+                    tutor.finish()
+                    $('time').set('html', tutor.time)
+                    $('wpm').set('html', tutor.wpm)
+                    $('errorPercentage').set('html', tutor.errorPercentage)
+                    $('test').set('disabled', 'disabled')
+            }
+
+            function checkHit(event) {
+                var testChar = tutor.testString[tutor.currentCharIndex]
+                tutor.currentCharIndex = tutor.currentCharIndex + 1
+                if (keyEquals(event, testChar)) {
+                    tutor.hits++
+                } else {
+                    var typedStringLength = $('test').get('value').length
+                    var testStringUpToNow = tutor.testString.substring(0, typedStringLength)
+                    if ($('test').get('value') != testStringUpToNow) {
+                        tutor.misses++
+                        var missedCharactersHtml = $('missedCharacters').get('html')
+                        $('missedCharacters').set('html', missedCharactersHtml + ' ' + testChar)
+                    }
+                }
+                $('hits').set('html', tutor.hits)
+                $('misses').set('html', tutor.misses)
+            }
+            
+            function checkBackspace(event) {
+                if (event.key === 'backspace') {
+                    tutor.currentCharIndex = tutor.currentCharIndex - 1
+                    tutor.backspaces++
+                    $('backspaces').set('html', tutor.backspaces)
+                    return true
+                } else {
+                    return false
+                }
+            }
+
+            function tabPressed(event) {
+                // This is necessary because the text input will otherwise stop counting hits.
+                if (event.key === 'tab') {
+                    return true
+                } else {
+                    return false
+                }
+            }
+
+            function checkFinish() {
+                // Are we at the end?
+                if (tutor.currentCharIndex === tutor.testString.length) {
+                    finishTutor()
+                    return
+                }
+            }
+
+            function checkTutorRuns() {
+                if (!tutor) {
+                    tutor = new TypingTutor($('examText').get('html'))
+                }
+            }
+
 	    var tutor = false
             window.addEvent('domready', function() {
-                $('examText').set('html', getExamElement())
+                $('examText').set('html', examElement())
                 var keyPressed = function(e) {
+
 		    // setTimeout is necessary because the keypress event 
 		    // does not otherwise enter the char before executing this.
 		    setTimeout(function() {
-			if (!tutor) {
-			    tutor = new TypingTutor($('examText').get('html'))
-			}
-			if (e.key === 'tab') {
-			    return
-			}
-
-			if (e.key === 'backspace') {
-			    tutor.currentCharIndex = tutor.currentCharIndex - 1
-			    tutor.backspaces++
-			    $('backspaces').set('html', tutor.backspaces)
-			    return
-			}
-			var testChar = tutor.testString[tutor.currentCharIndex]
-			tutor.currentCharIndex = tutor.currentCharIndex + 1
-			if (keyEquals(e, testChar)) {
-			    tutor.hits++
-			} else {
-			    var typedStringLength = $('test').get('value').length
-			    var testStringUpToNow = tutor.testString.substring(0, typedStringLength)
-			    if ($('test').get('value') != testStringUpToNow) {
-				tutor.misses++
-				var missedCharactersHtml = $('missedCharacters').get('html')
-				$('missedCharacters').set('html', missedCharactersHtml + ' ' + testChar)
-			    }
-			}
-			$('hits').set('html', tutor.hits)
-			$('misses').set('html', tutor.misses)
-			if (tutor.currentCharIndex === tutor.testString.length) {
-			    finishTutor()
-			    return
-			}
+                        checkTutorRuns();
+                        if (tabPressed(e)) {
+                            return
+                        }
+                        if (checkBackspace(e)) {
+                            return
+                        }
+                        checkHit(e);
+                        checkFinish();
 		    }, 0)
                 }
 
@@ -115,13 +156,6 @@
 		$('finish').addEvent('click', function() {
 			finishTutor()
 	        })
-		function finishTutor() {
-			tutor.finish()
-			$('time').set('html', tutor.time)
-			$('wpm').set('html', tutor.wpm)
-			$('errorPercentage').set('html', tutor.errorPercentage)
-			$('test').set('disabled', 'disabled')
-		}
             })
         </script>
         <style>
